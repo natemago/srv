@@ -1,0 +1,18 @@
+srv tests
+------------------
+
+HTTP Requests
+------------------
+
+Done with curl.
+
+Examples:
+
+ * POST:
+   1. with url encoded data
+
+      curl http://localhost:8000  --data-urlencode @http-requests/post_1
+      
+   2. ...
+
+
