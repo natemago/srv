@@ -1,0 +1,102 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>%(dir_path)s</title>
+<style type="text/css">
+    body{
+        font-family: monospace;
+        background: #F0F0F0;
+        color: gray;
+    }
+    td,th{
+        font-family: monospace;
+        text-align: right;
+        padding-left: 30px;
+        
+    }
+    
+    th{
+        color: #0084DB;
+    }
+    
+    .header{
+        font-weight: bold;
+        font-size: 14px;
+        padding: 10px;
+    }
+    .footer{
+        color: gray;
+        text-align: right;
+        padding: 5px;
+    }
+    .content{
+        border: 1px solid #D9D9D9;
+        background: #fff;
+        padding: 20px;
+        
+        
+        -webkit-border-radius: 3px;
+        -moz-border-radius: 3px;
+        border-radius: 3px;
+        box-shadow: 1px 1px 3px #0084DB;
+    }
+    
+    a.link-dir{
+        color: gray;
+        font-weight: bold;
+    }
+    
+    a.link-dir:HOVER{
+        color: #D6A400;
+    }
+    
+    a.link-file{
+        color: gray;
+    }
+    
+    a.link-file:HOVER{
+        color: #D6A400;
+    }
+    
+    
+</style>
+</head>
+<body>
+<div class="header">
+    %(dir_path)s
+</div>
+<div class="content">
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Size</th>
+                <th>Modified</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><a href="#" class="link-dir">%(name)s</a></td>
+                <td class="info-size">%(size)d</td>
+                <td class="info-modified">%(modified)s</td>
+            </tr>
+            <tr>
+                <td><a href="#" class="link-dir">dir-1</a></td>
+                <td class="info-size">4096</td>
+                <td class="info-modified">23/05/2012 10:12:55</td>
+            </tr>
+            <tr>
+                <td><a href="#" class="link-file">File.html</a></td>
+                <td class="info-size">4096</td>
+                <td class="info-modified">23/05/2012 10:12:55</td>
+            </tr>
+        </tbody>
+    </table>
+    
+</div>
+<div class="footer">
+srv, version %(server_version)s
+</div>
+</body>
+</html>
