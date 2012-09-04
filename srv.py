@@ -1,21 +1,20 @@
 #!/usr/bin/python3
 
-from http.server import HTTPServer as HTTPServer
-from http.server import SimpleHTTPRequestHandler as SimpleHTTPRequestHandler
-from io import BytesIO as BytesIO
-import uuid
+from fileinput import close
+from genericpath import isdir
+from http.server import HTTPServer as HTTPServer, \
+    SimpleHTTPRequestHandler as SimpleHTTPRequestHandler
+from io import BytesIO as BytesIO, StringIO
+from urllib import parse
+import os.path
+import posixpath
 import re
 import shutil
-from urllib import parse
-import urllib
-import posixpath
-
 import socket
-from io import StringIO
-from genericpath import isdir
-import os.path
 import time
-from fileinput import close
+import urllib
+import uuid
+import configparser
 
 
 class HTTPException(Exception):
@@ -58,11 +57,16 @@ class BaseMappedHander:
 class DispatcherHTTPServer(HTTPServer):
     def __init__(self, server_address, RequestHandlerClass, 
                  bind_and_activate=True, handlersMapping={},
-                 srv_path="."):
+                 srv_path=".",
+                 configuration={}):
         HTTPServer.__init__(self, server_address, RequestHandlerClass, bind_and_activate)
         self.handlers = handlersMapping
         self.srv_path = srv_path
-
+        self.initialize_server()
+        self.configuration = configuration
+    def initialize_server(self):
+        pass
+    
 
 class HTTPSession:
     def __init__(self):
@@ -481,7 +485,64 @@ srv, version %(server_version)s
                 day, SimpleHTTPRequestHandler.monthname[month], year,
                 hh, mm, ss)
         return s
+
+
+_DEFAULT_CONFIG={
+    "server":{
+        "port": 8000,
+        "serve_path": "."
+    },
+    "handlers":{
+        "__default__": {
+            "class": "SimpleHandler",
+            "pattern":".*",
+            "weight": -1
+        }
+    }
+}
+
+def read_config(fileName, defaults):
+    config = configparser.ConfigParser()
+    config.read(fileName)
+    cnf = {}
+    sections = config.sections()
     
+    for section in sections:
+        sec = {}
+        cnf[section] = sec
+        for name, value in config.items(section):
+            cnf[section][name] = value
+    
+    return cnf
+    
+
+
+class ClassLoader:
+    
+    def __init__(self, context={}):
+        self.context = context
+        
+    
+    def load_class(self, path):
+        module, dot, clazz =  path.rpartition('.')
+        try:
+            mod = __import__(module, context, context, [clazz], -1)
+            constr = getattr(mod,clazz)
+            return constr
+        except Exception as e:
+            raise Exception(e, "Cannot load class %s"%path)
+
+    def get_instance(self, class_name, params=None):
+        clz = self.load_class(class_name)
+        instance = None
+        if params == None:
+            instance = clz()
+        else:
+            instance = clz(*params)
+        
+        return instance
+
+
 def run_server(server_class=HTTPServer, 
          handler_class=SimpleHTTPRequestHandler,
                    port=8000,

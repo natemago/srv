@@ -4,42 +4,62 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>%(dir_path)s</title>
 <style type="text/css">
+    /*
+       dark-gray: #666666
+       fog-gray: #999999
+       light-gray: #cccccc
+       white: #ffffff
+       green: #ABDB25 
+        
+     */
     body{
         font-family: monospace;
-        background: #F0F0F0;
         color: gray;
+        margin: 0px;
+        /*background: #999999;*/
+        background: url('images/tile.png');
     }
     td,th{
         font-family: monospace;
-        text-align: right;
+        text-align: left;
         padding-left: 30px;
-        
+    }
+    table{
+        width: 90%;
     }
     
-    th{
-        color: #0084DB;
+    tr:HOVER{
+        background: #cccccc;
+        color: #fff;
     }
+    
     
     .header{
-        font-weight: bold;
-        font-size: 14px;
+        margin: 30px;
         padding: 10px;
-    }
-    .footer{
-        color: gray;
-        text-align: right;
-        padding: 5px;
-    }
-    .content{
-        border: 1px solid #D9D9D9;
-        background: #fff;
-        padding: 20px;
+        background: #ABDB25;
+        border: solid 1px #ccc;
+        border-bottom: solid 1px #999999;
+        color: #666;
         
-        
+        box-shadow: 0px 1px 7px #666666;
         -webkit-border-radius: 3px;
         -moz-border-radius: 3px;
         border-radius: 3px;
-        box-shadow: 1px 1px 3px #0084DB;
+    }
+    .footer{
+        color: #666;
+        text-align: right;
+        width: 100%;
+        border-top: solid 1px #666666;
+        background: -moz-linear-gradient(top, #999999, #cccccc 100%);  
+        background: -webkit-gradient(linear, 0 0, 0 100%, from(#999999), to(#cccccc));
+        height: 70px;
+        padding-top: 20px;
+    }
+    .content{
+        background: #fff;
+        padding: 15px;
     }
     
     a.link-dir{
@@ -59,6 +79,12 @@
         color: #D6A400;
     }
     
+    .info-size{
+        width: 150px;
+    }
+    .info-modified{
+        width: 200px;
+    }
     
 </style>
 </head>
