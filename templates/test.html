@@ -1,128 +1,57 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>%(dir_path)s</title>
-<style type="text/css">
-    /*
-       dark-gray: #666666
-       fog-gray: #999999
-       light-gray: #cccccc
-       white: #ffffff
-       green: #ABDB25 
-        
-     */
-    body{
-        font-family: monospace;
-        color: gray;
-        margin: 0px;
-        /*background: #999999;*/
-        background: url('images/tile.png');
-    }
-    td,th{
-        font-family: monospace;
-        text-align: left;
-        padding-left: 30px;
-    }
-    table{
-        width: 90%;
-    }
-    
-    tr:HOVER{
-        background: #cccccc;
-        color: #fff;
-    }
-    
-    
-    .header{
-        margin: 30px;
-        padding: 10px;
-        background: #ABDB25;
-        border: solid 1px #ccc;
-        border-bottom: solid 1px #999999;
-        color: #666;
-        
-        box-shadow: 0px 1px 7px #666666;
-        -webkit-border-radius: 3px;
-        -moz-border-radius: 3px;
-        border-radius: 3px;
-    }
-    .footer{
-        color: #666;
-        text-align: right;
-        width: 100%;
-        border-top: solid 1px #666666;
-        background: -moz-linear-gradient(top, #999999, #cccccc 100%);  
-        background: -webkit-gradient(linear, 0 0, 0 100%, from(#999999), to(#cccccc));
-        height: 70px;
-        padding-top: 20px;
-    }
-    .content{
-        background: #fff;
-        padding: 15px;
-    }
-    
-    a.link-dir{
-        color: gray;
-        font-weight: bold;
-    }
-    
-    a.link-dir:HOVER{
-        color: #D6A400;
-    }
-    
-    a.link-file{
-        color: gray;
-    }
-    
-    a.link-file:HOVER{
-        color: #D6A400;
-    }
-    
-    .info-size{
-        width: 150px;
-    }
-    .info-modified{
-        width: 200px;
-    }
-    
-</style>
-</head>
-<body>
-<div class="header">
-    %(dir_path)s
-</div>
-<div class="content">
-    <table>
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Size</th>
-                <th>Modified</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><a href="#" class="link-dir">%(name)s</a></td>
-                <td class="info-size">%(size)d</td>
-                <td class="info-modified">%(modified)s</td>
-            </tr>
-            <tr>
-                <td><a href="#" class="link-dir">dir-1</a></td>
-                <td class="info-size">4096</td>
-                <td class="info-modified">23/05/2012 10:12:55</td>
-            </tr>
-            <tr>
-                <td><a href="#" class="link-file">File.html</a></td>
-                <td class="info-size">4096</td>
-                <td class="info-modified">23/05/2012 10:12:55</td>
-            </tr>
-        </tbody>
-    </table>
-    
-</div>
-<div class="footer">
-srv, version %(server_version)s
-</div>
-</body>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <link rel="stylesheet" type="text/css" href="main.css" />
+    </head>
+    <body>
+        <div class="content-wrapper shadow-halo">
+			<div class="header shadow-down">
+			    The header
+			    <div class="header-actions">
+			         <div class="action">
+			             <a href="#"><span class="icon icon-up" title="Go one level up"></span></a>
+			         </div>
+			    </div>
+			</div>
+			<div class="content">
+	            <div class="entry">
+	                <div class="entry-label">
+	                    <a href="#" class="inner">
+	                       <span class="icon icon-dir"></span>
+	                       images
+	                    </a>
+	                </div>
+	                <div class="entry-description inners">
+	                    Directory
+	                </div>
+	            </div>
+	            <div class="entry">
+                    <div class="entry-label">
+                        <a href="#" class="inner">
+                            <span class="icon icon-file-color3"></span>
+                            main.css
+                        </a>
+                    </div>
+                    <div class="entry-description inner">
+                        File, size: 951 bytes
+                    </div>
+                </div>
+                 <div class="entry">
+                    <div class="entry-label">
+                        <a href="#" class="inner">
+                            <span class="icon icon-file-color3"></span>
+                            test.html
+                        </a>
+                    </div>
+                    <div class="entry-description inner">
+                        File, size: 814 bytes
+                    </div>
+                </div>
+			</div>
+			<div class="footer">
+			  the footer
+			</div>
+		</div>
+    </body>
 </html>
