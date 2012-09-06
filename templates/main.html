@@ -1,0 +1,26 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+        <title>%(path)s</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <link rel="stylesheet" type="text/css" href="main.css" />
+    </head>
+    <body>
+        <div class="content-wrapper shadow-halo">
+            <div class="header shadow-down">
+                %(path)s (%(dir_path)s)
+                <div class="header-actions">
+                     <div class="action">
+                         <a href="%(path)s/.."><span class="icon icon-up" title="Go one level up"></span></a>
+                     </div>
+                </div>
+            </div>
+            <div class="content">
+                %(_FILES_LISTING_)s
+            </div>
+            <div class="footer">
+              srv, version %(server_version)s
+            </div>
+        </div>
+    </body>
+</html>

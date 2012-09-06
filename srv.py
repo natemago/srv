@@ -15,6 +15,7 @@ import time
 import urllib
 import uuid
 import configparser
+from zipfile import ZipFile
 
 
 class HTTPException(Exception):
@@ -542,7 +543,83 @@ class ClassLoader:
         
         return instance
 
+class ZipLoader:
+    _ZIP_ARCHIVE_PATTERNS = ['.*\\.zip','.*\\.jar']
+    OVERRIDE = 0
+    IGNORE = 1
+    IMMEDIATE = 2
+    LAZY = 4
+    def __init__(self, path=[], policy=ZipLoader.OVERRIDE, loading=ZipLoader.LAZY):
+        self.path = path
+        self.policy = policy
+        self.loading = loading
+        self.cache = {}
+        self.scan()
+    
+    def scan(self):
+        for p  in self.path:
+            self._scan(p)
+    
+    def _scan(self, file_path):
+        if(os.path.isdir(file_path)):
+            names = os.listdir(file_path)
+            for n in names:
+                self._scan(file_path + '/' + n)
+        else:
+            if(self._is_zip_archive(file_path)):
+                self._read_zip_file(file_path)
+    
+    def _read_zip_file(self, zf):
+        try:
+            zh = ZipFile(zf, "r")
+            names = zh.namelist()
+            for name in names:
+                existing = self.cache.get(name)
+                load_now = False
+                if existing != None:
+                    if self.policy == ZipLoader.OVERRIDE:
+                        load_now = True
+                else:
+                    load_now = True
+                
+                if(load_now):
+                    entry = {}
+                    entry["name"] = name
+                    entry["file"] = zh
+                    entry["file_name"] = zf
+                    if(self.loading == ZipLoader.IMMEDIATE):
+                        entry["content"] = self._load_from_archive(name, zh)
+                    self.cache["name"] = entry
+                 
+        except Exception as e:
+            pass
+            
+    
+    def _load_from_archive(self, name, zip_file):
+        s = BytesIO()
+        shutil.copyfileobj(zip_file.open(name, "r"), s)
+        return s.getvalue()
+    
+    def _is_zip_archive(self, path):
+        for pattern in ZipLoader._ZIP_ARCHIVE_PATTERNS:
+            if (re.match(pattern, path, re.I)):
+                return True
+        return False
+    
+    
+    def get_resource(self, name):
+        rc = self.cache.get(name)
+        if rc != None:
+            content = rc.get("content")
+            if content == None and self.loading == ZipLoader.LAZY:
+                    content = self._load_from_archive(name, rc["file"])
+                    rc["content"] = content
+            return content
+        
+        return None
+    
 
+    
 def run_server(server_class=HTTPServer, 
          handler_class=SimpleHTTPRequestHandler,
                    port=8000,
