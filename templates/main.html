@@ -3,16 +3,18 @@
     <head>
         <title>%(path)s</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <link rel="stylesheet" type="text/css" href="main.css" />
+        <link rel="stylesheet" type="text/css" href="/::templates/main.css" />
     </head>
     <body>
         <div class="content-wrapper shadow-halo">
             <div class="header shadow-down">
-                %(path)s (%(dir_path)s)
                 <div class="header-actions">
                      <div class="action">
                          <a href="%(path)s/.."><span class="icon icon-up" title="Go one level up"></span></a>
                      </div>
+                </div>
+                <div class="header-title">
+                %(path)s (%(dir_path)s)
                 </div>
             </div>
             <div class="content">

@@ -7,7 +7,7 @@ declare -a TEMPLATE_FILES=(
     'templates/main.css'
     'templates/file.html'
     'templates/dir.html'
-    'templates/images/tile.png'
+    'templates/images/sprite.png'
     );
 
 

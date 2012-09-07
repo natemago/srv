@@ -16,6 +16,8 @@ import urllib
 import uuid
 import configparser
 from zipfile import ZipFile
+import base64
+
 
 
 class HTTPException(Exception):
@@ -57,11 +59,11 @@ class BaseMappedHander:
 
 class DispatcherHTTPServer(HTTPServer):
     def __init__(self, server_address, RequestHandlerClass, 
-                 bind_and_activate=True, handlersMapping={},
+                 bind_and_activate=True, handlers=[],
                  srv_path=".",
                  configuration={}):
         HTTPServer.__init__(self, server_address, RequestHandlerClass, bind_and_activate)
-        self.handlers = handlersMapping
+        self.handlers = sorted(handlers, key=lambda k: k["weight"])
         self.srv_path = srv_path
         self.initialize_server()
         self.configuration = configuration
@@ -122,7 +124,10 @@ class HTTPResponse:
         
     
     def write(self, msg):
-        self.out_stream.write(msg.encode())
+        if(isinstance(msg, str)):
+            self.out_stream.write(msg.encode())
+        else:
+            self.out_stream.write(msg)
     
     def send_error(self, code, message=None):
         self.code = code
@@ -162,9 +167,9 @@ class DispatcherHTTPHandler(SimpleHTTPRequestHandler):
     def do_handle_one_request(self, path, request=None):
         self.path = path
         self.log_message("PATH: %r (%r)", self.path, self.command)
-        for name in self.server.handlers:
-            self.log_message("\t Checking [%r]", name)
-            hndDef = self.server.handlers[name]
+        for hndDef in self.server.handlers:
+            self.log_message("\t Checking [%r]", hndDef["name"])
+            #hndDef = self.server.handlers[name]
             pattern = hndDef["pattern"]
             for p in pattern:
                 if re.match(p, self.path):
@@ -440,17 +445,22 @@ srv, version %(server_version)s
         g_params["dir_path"] = abspath
         g_params["path"] = request.path
         g_params["_FILES_LISTING_"] = ''.join(listingBuffer)
+        response.headers["Content-Type"] = "text/html";
         response.write(self._format_directory_listing(g_params))
         
     
     def _format_file(self, params):
-        return SimpleHandler.FILE_ENTRY_TEMPLATE % params
+        #return SimpleHandler.FILE_ENTRY_TEMPLATE % params
+        return _DEFAULT_RC_LOADER.get_resource_str("templates/file.html") % params
+        
     
     def _format_dir(self, params):
-        return SimpleHandler.DIRECTORY_ENTRY_TEMPLATE % params
+        #return SimpleHandler.DIRECTORY_ENTRY_TEMPLATE % params
+        return _DEFAULT_RC_LOADER.get_resource_str("templates/dir.html") % params
     
     def _format_directory_listing(self, params):
-        return SimpleHandler.DIRECTORY_LISTING_DOC_TEMPLATE % params
+        #return SimpleHandler.DIRECTORY_LISTING_DOC_TEMPLATE % params
+        return _DEFAULT_RC_LOADER.get_resource_str("templates/main.html") % params
     
     def process_file(self, request, response, abspath):
         response.headers["Content-type"] = self._get_mime_type(request.path)
@@ -594,7 +604,7 @@ class ZipLoader:
                     entry["file_name"] = zf
                     if(self.loading == ZipLoader.IMMEDIATE):
                         entry["content"] = self._load_from_archive(name, zh)
-                    self.cache["name"] = entry
+                    self.cache[name] = entry
                  
         except Exception as e:
             pass
@@ -626,11 +636,42 @@ class ZipLoader:
     def get_resource_str(self, name):
         rc = self.get_resource(name)
         if rc != None:
-            b = BytesIO()
-            shutil.copyfileobj(rc, b)
-            return b.decode()
+            #b = BytesIO()
+            #shutil.copyfileobj(BytesIO(rc), b)
+            #b.write(rc)
+            #return b.getvalue()decode()
+            return rc.decode()
         return None
 
+class StaticResourcesHandler(BaseMappedHander):
+    def do_GET(self, request, response):
+        self._load_rc(request, response)
+        
+    def do_POST(self, request, response):
+        self._load_rc(request, response)
+    
+    def _load_rc(self, request, response):
+        path  = request.path[1:] # strip the leading /
+        if(len(path) > 2 and path[:2] == "::"):
+            rc_path = path[2:]
+            if(rc_path != None):
+                rc = _DEFAULT_RC_LOADER.get_resource(rc_path)
+                if(rc != None):
+                    response.headers["Content-Type"] = self._get_mime_type(rc_path)
+                    response.write(rc)
+                    return
+        # send 404 otherwise
+        response.send_error(404)
+    
+    def _get_mime_type(self, path):
+        base, ext = posixpath.splitext(path)
+        if ext in SimpleHTTPRequestHandler.extensions_map:
+            return SimpleHTTPRequestHandler.extensions_map[ext]
+        ext = ext.lower()
+        if ext in SimpleHTTPRequestHandler.extensions_map:
+            return SimpleHTTPRequestHandler.extensions_map[ext]
+        else:
+            return SimpleHTTPRequestHandler.extensions_map['']
     
 def run_server(server_class=HTTPServer, 
          handler_class=SimpleHTTPRequestHandler,
@@ -641,14 +682,109 @@ def run_server(server_class=HTTPServer,
     """
     print("Server is started and listens on port: %d"%port)
     server_address = (address, port)
-    httpd = server_class(server_address, handler_class,handlersMapping={
-       "dispatcher":{
+    httpd = server_class(server_address, handler_class,handlers=[
+       {
             "pattern":["/.*"],
-            "handler": SimpleHandler()
+            "handler": SimpleHandler(),
+            "name": "default",
+            "weight": 10
+        },
+        {
+            "pattern":["/::.*"],
+            "handler": StaticResourcesHandler(),
+            "name": "__static_rc",
+            "weight": 0
         }
-    })
+    ])
     httpd.serve_forever()
-    
+
+
+# base64 encoded ZIP file of the templates dir and other initial resources
+_INITIAL_RC = """
+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"""
+# -- end of Base 64 string resource
+_DEFAULT_RC_LOADER = ZipLoader([BytesIO( base64.b64decode( _INITIAL_RC.encode() ) )])
+
+
+
 if __name__ == "__main__":
    print(" :: server staring ...")
    try:
@@ -657,165 +793,3 @@ if __name__ == "__main__":
       print ("\n:: forced ::")
    print(" :: server shut down ::")
 
-
-
-# base64 encoded ZIP file of the templates dir and other initial resources
-_INITIAL_RC = """
-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
-6AMAAFBLBQYAAAAABQAFAMEBAACNIAAAAAA="""
-# -- end of Base 64 string resource
-
-_DEFAULT_RC_LOADER = ZipLoader([BytesIO(_INITIAL_RC.encode())])
