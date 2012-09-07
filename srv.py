@@ -117,12 +117,12 @@ class HTTPResponse:
         self.code = 200
         self.message = ""
         self.error = False
-        self.out_stream = StringIO()
+        self.out_stream = BytesIO()
         self.headers = {}
         
     
     def write(self, msg):
-        self.out_stream.write(msg)
+        self.out_stream.write(msg.encode())
     
     def send_error(self, code, message=None):
         self.code = code
@@ -257,7 +257,8 @@ class DispatcherHTTPHandler(SimpleHTTPRequestHandler):
         if(sent_headers):
             self.end_headers()
         
-        shutil.copyfileobj(BytesIO(response.out_stream.getvalue().encode() ), self.wfile)
+        #shutil.copyfileobj(response.out_stream, self.wfile)
+        self.wfile.write(response.out_stream.getvalue())
         
     
     def process_default_request(self):
@@ -454,7 +455,7 @@ srv, version %(server_version)s
     def process_file(self, request, response, abspath):
         response.headers["Content-type"] = self._get_mime_type(request.path)
         try:
-            fh = open(abspath, "r")
+            fh = open(abspath, "rb")
             fs = os.fstat(fh.fileno())
             response.headers["Content-Length"] = fs[6]
             response.headers["Last-Modified"] = self._date_time_string(fs.st_mtime)
@@ -543,16 +544,18 @@ class ClassLoader:
         
         return instance
 
+
+
 class ZipLoader:
     _ZIP_ARCHIVE_PATTERNS = ['.*\\.zip','.*\\.jar']
     OVERRIDE = 0
     IGNORE = 1
     IMMEDIATE = 2
     LAZY = 4
-    def __init__(self, path=[], policy=ZipLoader.OVERRIDE, loading=ZipLoader.LAZY):
+    def __init__(self, path=[], policy=None, loading=None):
         self.path = path
-        self.policy = policy
-        self.loading = loading
+        self.policy = policy or self.OVERRIDE
+        self.loading = loading or self.LAZY
         self.cache = {}
         self.scan()
     
