@@ -1,23 +1,22 @@
 #!/usr/bin/python3
 
+import base64
+import configparser
 from fileinput import close
 from genericpath import isdir
 from http.server import HTTPServer as HTTPServer, \
     SimpleHTTPRequestHandler as SimpleHTTPRequestHandler
 from io import BytesIO as BytesIO, StringIO
-from urllib import parse
 import os.path
 import posixpath
 import re
 import shutil
 import socket
 import time
+from urllib import parse
 import urllib
 import uuid
-import configparser
 from zipfile import ZipFile
-import base64
-
 
 
 class HTTPException(Exception):
@@ -58,7 +57,7 @@ class BaseMappedHander:
         pass
 
 class DispatcherHTTPServer(HTTPServer):
-    def __init__(self, server_address, RequestHandlerClass, 
+    def __init__(self, server_address, RequestHandlerClass,
                  bind_and_activate=True, handlers=[],
                  srv_path=".",
                  configuration={}):
@@ -98,7 +97,7 @@ class HTTPRequest:
         self.attributes = {}
         self.headers = {}
         self.remote_ip = ""
-        self.host = ("",0) # Tupple (name, port)
+        self.host = ("", 0)  # Tupple (name, port)
         self.scheme = "HTTP"
         self.protocol_version = "1.0"
         self.forwarded = False
@@ -142,6 +141,9 @@ class DispatcherHTTPHandler(SimpleHTTPRequestHandler):
         """
         Overrides the method in the base HTTP handler
         """
+        # TODO: This is the logic to be implemented 
+        # for async calls
+        
         try:
             self.raw_requestline = self.rfile.readline(65537)
             if len(self.raw_requestline) > 65536:
@@ -157,9 +159,9 @@ class DispatcherHTTPHandler(SimpleHTTPRequestHandler):
                 # An error code has been sent, just exit
                 return
             self.do_handle_one_request(self.path)
-            self.wfile.flush() #actually send the response if not already done.
+            self.wfile.flush()  # actually send the response if not already done.
         except socket.timeout as e:
-            #a read or a write timed out.  Discard this connection
+            # a read or a write timed out.  Discard this connection
             self.log_error("Request timed out: %r", e)
             self.close_connection = 1
             return
@@ -169,7 +171,7 @@ class DispatcherHTTPHandler(SimpleHTTPRequestHandler):
         self.log_message("PATH: %r (%r)", self.path, self.command)
         for hndDef in self.server.handlers:
             self.log_message("\t Checking [%r]", hndDef["name"])
-            #hndDef = self.server.handlers[name]
+            # hndDef = self.server.handlers[name]
             pattern = hndDef["pattern"]
             for p in pattern:
                 if re.match(p, self.path):
@@ -178,7 +180,7 @@ class DispatcherHTTPHandler(SimpleHTTPRequestHandler):
                     if(request == None):
                         request = self.construct_request()
                     response = self.construct_response()
-                    hnd.base_path = os.path.abspath(self.server.srv_path) # TODO
+                    hnd.base_path = os.path.abspath(self.server.srv_path)  # TODO
                     hnd.process(request, response)
                     self.process_response(request, response)
                     return
@@ -201,21 +203,21 @@ class DispatcherHTTPHandler(SimpleHTTPRequestHandler):
         body = ''
         if(cl is not None):
             cl = int(str(cl))
-            self.log_message("test - Content Length: %d"%(cl))
+            self.log_message("test - Content Length: %d" % (cl))
             req.in_stream.write(self.rfile.read(cl))
-            print("REQUEST:\n%s"%req.in_stream.getvalue())
+            print("REQUEST:\n%s" % req.in_stream.getvalue())
             body = req.in_stream.getvalue()
             if (body is not None):
-                body = body.decode("utf-8") # FIXME: use the proper encoding here...
+                body = body.decode("utf-8")  # FIXME: use the proper encoding here...
             else:
                 body = ""
-        req.params =  self._parse_request_params(req.method, body, "")
+        req.params = self._parse_request_params(req.method, body, "")
         print(req.params)
         return req
     
     def _parse_request_params(self, method, body, query_string):
         params = {}
-        if( method == 'POST' or method == 'GET' ):
+        if(method == 'POST' or method == 'GET'):
             body = urllib.parse.unquote(body)
             body = body[:-1]
             raw_params = urllib.parse.parse_qs(body) or {}
@@ -256,13 +258,13 @@ class DispatcherHTTPHandler(SimpleHTTPRequestHandler):
         else:
             self.send_response_only(response.code, response.message)
         sent_headers = False
-        for name,value in response.headers.items():
+        for name, value in response.headers.items():
             self.send_header(name, value)
             sent_headers = True
         if(sent_headers):
             self.end_headers()
         
-        #shutil.copyfileobj(response.out_stream, self.wfile)
+        # shutil.copyfileobj(response.out_stream, self.wfile)
         self.wfile.write(response.out_stream.getvalue())
         
     
@@ -294,7 +296,7 @@ class SimpleHandler (BaseMappedHander):
         
     def do_process(self, request, response, abspath):
         if isdir(abspath):
-            if(not request.path.endswith('/') ):
+            if(not request.path.endswith('/')):
                 response.redirect(request.path + '/')
             else:
                 self.process_dir(request, response, abspath)
@@ -325,7 +327,7 @@ class SimpleHandler (BaseMappedHander):
                     params["size"] = "--"
                     listingBuffer.append(self._format_dir(params))
                 else:
-                    fh = open(file_path,"r")
+                    fh = open(file_path, "r")
                     params["size"] = os.fstat(fh.fileno())[6]
                     fh.close()
                     listingBuffer.append(self._format_file(params))
@@ -343,16 +345,16 @@ class SimpleHandler (BaseMappedHander):
         
     
     def _format_file(self, params):
-        #return SimpleHandler.FILE_ENTRY_TEMPLATE % params
+        # return SimpleHandler.FILE_ENTRY_TEMPLATE % params
         return _DEFAULT_RC_LOADER.get_resource_str("templates/file.html") % params
         
     
     def _format_dir(self, params):
-        #return SimpleHandler.DIRECTORY_ENTRY_TEMPLATE % params
+        # return SimpleHandler.DIRECTORY_ENTRY_TEMPLATE % params
         return _DEFAULT_RC_LOADER.get_resource_str("templates/dir.html") % params
     
     def _format_directory_listing(self, params):
-        #return SimpleHandler.DIRECTORY_LISTING_DOC_TEMPLATE % params
+        # return SimpleHandler.DIRECTORY_LISTING_DOC_TEMPLATE % params
         return _DEFAULT_RC_LOADER.get_resource_str("templates/main.html") % params
     
     def process_file(self, request, response, abspath):
@@ -392,7 +394,7 @@ class SimpleHandler (BaseMappedHander):
         return s
 
 
-_DEFAULT_CONFIG={
+_DEFAULT_CONFIG = {
     "server":{
         "port": 8000,
         "serve_path": "."
@@ -401,7 +403,7 @@ _DEFAULT_CONFIG={
         "__default__": {
             "class": "SimpleHandler",
             "pattern":".*",
-            "weight": -1
+            "weight":-1
         }
     }
 }
@@ -429,13 +431,13 @@ class ClassLoader:
         
     
     def load_class(self, path):
-        module, dot, clazz =  path.rpartition('.')
+        module, dot, clazz = path.rpartition('.')
         try:
             mod = __import__(module, context, context, [clazz], -1)
-            constr = getattr(mod,clazz)
+            constr = getattr(mod, clazz)
             return constr
         except Exception as e:
-            raise Exception(e, "Cannot load class %s"%path)
+            raise Exception(e, "Cannot load class %s" % path)
 
     def get_instance(self, class_name, params=None):
         clz = self.load_class(class_name)
@@ -450,7 +452,7 @@ class ClassLoader:
 
 
 class ZipLoader:
-    _ZIP_ARCHIVE_PATTERNS = ['.*\\.zip','.*\\.jar']
+    _ZIP_ARCHIVE_PATTERNS = ['.*\\.zip', '.*\\.jar']
     OVERRIDE = 0
     IGNORE = 1
     IMMEDIATE = 2
@@ -471,7 +473,7 @@ class ZipLoader:
             names = os.listdir(file_path)
             for n in names:
                 self._scan(file_path + '/' + n)
-        elif (isinstance(file_path,BytesIO)):
+        elif (isinstance(file_path, BytesIO)):
             self._read_zip_file(file_path)
         else:
             if(self._is_zip_archive(file_path)):
@@ -529,10 +531,10 @@ class ZipLoader:
     def get_resource_str(self, name):
         rc = self.get_resource(name)
         if rc != None:
-            #b = BytesIO()
-            #shutil.copyfileobj(BytesIO(rc), b)
-            #b.write(rc)
-            #return b.getvalue()decode()
+            # b = BytesIO()
+            # shutil.copyfileobj(BytesIO(rc), b)
+            # b.write(rc)
+            # return b.getvalue()decode()
             return rc.decode()
         return None
 
@@ -544,7 +546,7 @@ class StaticResourcesHandler(BaseMappedHander):
         self._load_rc(request, response)
     
     def _load_rc(self, request, response):
-        path  = request.path[1:] # strip the leading /
+        path = request.path[1:]  # strip the leading /
         if(len(path) > 2 and path[:2] == "::"):
             rc_path = path[2:]
             if(rc_path != None):
@@ -566,16 +568,16 @@ class StaticResourcesHandler(BaseMappedHander):
         else:
             return SimpleHTTPRequestHandler.extensions_map['']
     
-def run_server(server_class=HTTPServer, 
+def run_server(server_class=HTTPServer,
          handler_class=SimpleHTTPRequestHandler,
                    port=8000,
                    address=''):
     """
     The most basic HTTP server.
     """
-    print("Server is started and listens on port: %d"%port)
+    print("Server is started and listens on port: %d" % port)
     server_address = (address, port)
-    httpd = server_class(server_address, handler_class,handlers=[
+    httpd = server_class(server_address, handler_class, handlers=[
        {
             "pattern":["/.*"],
             "handler": SimpleHandler(),
@@ -674,7 +676,7 @@ bXBsYXRlcy9kaXIuaHRtbFVUBQADN55IUHV4CwABBOgDAAAE6AMAAFBLAQIeAwoAAAAAAFeJJkEa
 6pR+qwgAAKsIAAAbABgAAAAAAAAAAACkgbIGAAB0ZW1wbGF0ZXMvaW1hZ2VzL3Nwcml0ZS5wbmdV
 VAUAA/W8SFB1eAsAAQToAwAABOgDAABQSwUGAAAAAAUABQDDAQAAsg8AAAAA"""
 # -- end of Base 64 string resource
-_DEFAULT_RC_LOADER = ZipLoader([BytesIO( base64.b64decode( _INITIAL_RC.encode() ) )])
+_DEFAULT_RC_LOADER = ZipLoader([BytesIO(base64.b64decode(_INITIAL_RC.encode()))])
 
 
 
@@ -685,4 +687,3 @@ if __name__ == "__main__":
    except KeyboardInterrupt:
       print ("\n:: forced ::")
    print(" :: server shut down ::")
-
