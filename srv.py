@@ -17,6 +17,7 @@ from urllib import parse
 import urllib
 import uuid
 from zipfile import ZipFile
+from concurrent.futures.thread import ThreadPoolExecutor
 
 
 class HTTPException(Exception):
@@ -66,9 +67,14 @@ class DispatcherHTTPServer(HTTPServer):
         self.srv_path = srv_path
         self.initialize_server()
         self.configuration = configuration
+        self.executor = ThreadPoolExecutor(max_workers=20)
     def initialize_server(self):
         pass
     
+    def finish_request(self, request, client_address):
+        def async_finish_request(server, request, client_address):
+            server.RequestHandlerClass(request, client_address, server)
+        self.executor.submit(async_finish_request(self, request, client_address))
 
 class HTTPSession:
     def __init__(self):
@@ -276,7 +282,7 @@ class DispatcherHTTPHandler(SimpleHTTPRequestHandler):
         method = getattr(self, mname)
         method()
 
-
+    
     
 class SimpleHandler (BaseMappedHander):
     
