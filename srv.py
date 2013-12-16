@@ -18,7 +18,7 @@ import urllib
 import uuid
 from zipfile import ZipFile
 from concurrent.futures.thread import ThreadPoolExecutor
-
+from argparse import ArgumentParser
 
 class HTTPException(Exception):
     def __init__(self, message="", code=500, cause=None):
@@ -600,6 +600,19 @@ def run_server(server_class=HTTPServer,
     httpd.serve_forever()
 
 
+
+def configure_parser():
+    parser = ArgumentParser(description="srv (serve) - Python web server")
+    parser.add_argument("-p","--port", default="8000", type=int, 
+                        required=False, dest="port", 
+                        help="Server HTTP port. Server will bind to this port.")
+    parser.add_argument("-d", "--directory", default=".", required=False, 
+                        dest="directory", 
+                        help="Base directory. Srv will serve the content of this directory. Analogous to document root in Apache.")
+
+    parser.add_argument("-v","--verbose", requred=False, help="Print more messages (be verbose).")
+
+    
 # base64 encoded ZIP file of the templates dir and other initial resources
 _INITIAL_RC = """
 UEsDBBQAAAAIAMR0J0EQB8h6sQEAAPwDAAATABwAdGVtcGxhdGVzL21haW4uaHRtbFVUCQADr+pJ
