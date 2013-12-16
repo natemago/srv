@@ -15,7 +15,7 @@ Installing
 
 There is no installing. Just download the "srv.py" file and make sure you have
 Python installed (python 3+).
-Then copy to the folder where the files that you want to server are located.
+Then copy to the folder where the files that you want to serve are located.
 
 Running
 -------
