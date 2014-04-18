@@ -610,9 +610,12 @@ def configure_parser():
                         dest="directory", 
                         help="Base directory. Srv will serve the content of this directory. Analogous to document root in Apache.")
 
-    parser.add_argument("-v","--verbose", requred=False, help="Print more messages (be verbose).")
-
+    parser.add_argument("-v","--verbose", required=False, help="Print more messages (be verbose).")
     
+    return parser
+
+
+
 # base64 encoded ZIP file of the templates dir and other initial resources
 _INITIAL_RC = """
 UEsDBBQAAAAIAMR0J0EQB8h6sQEAAPwDAAATABwAdGVtcGxhdGVzL21haW4uaHRtbFVUCQADr+pJ
@@ -697,12 +700,19 @@ VAUAA/W8SFB1eAsAAQToAwAABOgDAABQSwUGAAAAAAUABQDDAQAAsg8AAAAA"""
 # -- end of Base 64 string resource
 _DEFAULT_RC_LOADER = ZipLoader([BytesIO(base64.b64decode(_INITIAL_RC.encode()))])
 
-
-
+def start_server():
+    ps = configure_parser()
+    args = ps.parse_args()
+    argv = vars(args)
+    print(" :: starting server")
+    print(" :: server port: %d"%argv['port'])
+    try:
+        run_server(DispatcherHTTPServer, DispatcherHTTPHandler, argv['port'])
+    except KeyboardInterrupt:
+        print(" :: server shutdown requested")
+    
+    print(":: server shutting down...")
+    
+    
 if __name__ == "__main__":
-   print(" :: server staring ...")
-   try:
-      run_server(DispatcherHTTPServer, DispatcherHTTPHandler)
-   except KeyboardInterrupt:
-      print ("\n:: forced ::")
-   print(" :: server shut down ::")
+   start_server()
