@@ -577,7 +577,8 @@ class StaticResourcesHandler(BaseMappedHander):
 def run_server(server_class=HTTPServer,
          handler_class=SimpleHTTPRequestHandler,
                    port=8000,
-                   address=''):
+                   address='',
+                   srv_path='.'):
     """
     The most basic HTTP server.
     """
@@ -596,7 +597,7 @@ def run_server(server_class=HTTPServer,
             "name": "__static_rc",
             "weight": 0
         }
-    ])
+    ], srv_path = srv_path)
     httpd.serve_forever()
 
 
@@ -705,9 +706,14 @@ def start_server():
     args = ps.parse_args()
     argv = vars(args)
     print(" :: starting server")
-    print(" :: server port: %d"%argv['port'])
+    print(" :: server port: %d" % argv['port'])
+    print(" :: server directory: %s" % argv['directory'])
     try:
-        run_server(DispatcherHTTPServer, DispatcherHTTPHandler, argv['port'])
+        run_server(server_class=DispatcherHTTPServer,
+            handler_class=DispatcherHTTPHandler,
+            port=argv['port'],
+            address='',
+            srv_path=argv['directory'])
     except KeyboardInterrupt:
         print(" :: server shutdown requested")
     
