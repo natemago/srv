@@ -187,20 +187,19 @@ class DispatcherHTTPHandler(SimpleHTTPRequestHandler):
             self.wfile.flush()  # actually send the response if not already done.
         except socket.timeout as e:
             # a read or a write timed out.  Discard this connection
-            self.log_error("Request timed out: %r", e)
+            self.logger.error("Request timed out: %r", e)
             self.close_connection = 1
             return
     
     def do_handle_one_request(self, path, request=None):
         self.path = path
-        self.log_message("PATH: %r (%r)", self.path, self.command)
+        self.logger.debug("PATH: %r (%r)", self.path, self.command)
         for hndDef in self.server.handlers:
-            self.log_message("\t Checking [%r]", hndDef["name"])
-            # hndDef = self.server.handlers[name]
+            self.logger.debug("\t Checking [%r]", hndDef["name"])
             pattern = hndDef["pattern"]
             for p in pattern:
                 if re.match(p, self.path):
-                    self.log_message("\t\t-> match")
+                    self.logger.debug("\t\t-> match")
                     hnd = hndDef["handler"]
                     if(request == None):
                         request = self.construct_request()
@@ -210,9 +209,9 @@ class DispatcherHTTPHandler(SimpleHTTPRequestHandler):
                     self.process_response(request, response)
                     return
                 
-        self.log_message("Pass to default...")
+        self.logger.debug("Pass to default...")
         self.process_default_request()
-        self.log_message("Processing ended.")
+        self.logger.debug("Processing ended.")
     
     def construct_request(self):
         req = HTTPRequest()
@@ -228,9 +227,7 @@ class DispatcherHTTPHandler(SimpleHTTPRequestHandler):
         body = ''
         if(cl is not None):
             cl = int(str(cl))
-            self.log_message("test - Content Length: %d" % (cl))
             req.in_stream.write(self.rfile.read(cl))
-            print("REQUEST:\n%s" % req.in_stream.getvalue())
             body = req.in_stream.getvalue()
             if (body is not None):
                 body = body.decode("utf-8")  # FIXME: use the proper encoding here...
