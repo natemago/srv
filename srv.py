@@ -19,6 +19,7 @@ import uuid
 from zipfile import ZipFile
 from concurrent.futures.thread import ThreadPoolExecutor
 from argparse import ArgumentParser
+import logging
 
 class HTTPException(Exception):
     def __init__(self, message="", code=500, cause=None):
@@ -65,16 +66,34 @@ class DispatcherHTTPServer(HTTPServer):
         HTTPServer.__init__(self, server_address, RequestHandlerClass, bind_and_activate)
         self.handlers = sorted(handlers, key=lambda k: k["weight"])
         self.srv_path = srv_path
-        self.initialize_server()
         self.configuration = configuration
+        self.logger = self.setup_logger()
         self.executor = ThreadPoolExecutor(max_workers=20)
+        self.initialize_server()
+        
     def initialize_server(self):
-        pass
+        self.logger.info('Initializing server')
     
     def finish_request(self, request, client_address):
         def async_finish_request(server, request, client_address):
             server.RequestHandlerClass(request, client_address, server)
         self.executor.submit(async_finish_request(self, request, client_address))
+    
+    def setup_logger(self):
+        logger = None
+        if self.configuration.get('log_config_file') is not None:
+            logger = self.get_logger(self.configuration.get('log_config_file'))
+        else:
+            logger = self.get_default_logger()
+        return logger
+        
+    def get_logger(self, config_file):
+        logging.config.fileConfig(config_file)
+        return logging.getLogger('srv')
+    
+    def get_default_logger(self):
+        logging.basicConfig(level=logging.INFO)
+        return logging.getLogger('srv')
 
 class HTTPSession:
     def __init__(self):
