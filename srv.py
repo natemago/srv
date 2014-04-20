@@ -33,7 +33,7 @@ class HTTPException(Exception):
 
 
 
-class BaseMappedHander:
+class BaseMappedHandler:
     def __init__(self, base_path=""):
         self.base_path = base_path
     
@@ -300,7 +300,7 @@ class DispatcherHTTPHandler(SimpleHTTPRequestHandler):
 
     
     
-class SimpleHandler (BaseMappedHander):
+class SimpleHandler (BaseMappedHandler):
     
     def do_GET(self, request, response):
         try:
@@ -560,7 +560,7 @@ class ZipLoader:
             return rc.decode()
         return None
 
-class StaticResourcesHandler(BaseMappedHander):
+class StaticResourcesHandler(BaseMappedHandler):
     def do_GET(self, request, response):
         self._load_rc(request, response)
         
