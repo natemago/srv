@@ -34,9 +34,9 @@ class HTTPException(Exception):
 
 
 class BaseMappedHandler:
-    def __init__(self, base_path=""):
+    def __init__(self, base_path="", logger=None):
         self.base_path = base_path
-    
+        self.logger = logger
     
     def process(self, request, response):
         m = getattr(self, "do_" + request.method.upper())
@@ -75,9 +75,9 @@ class DispatcherHTTPServer(HTTPServer):
         self.logger.info('Initializing server')
     
     def finish_request(self, request, client_address):
-        def async_finish_request(server, request, client_address):
-            server.RequestHandlerClass(request, client_address, server)
-        self.executor.submit(async_finish_request(self, request, client_address))
+        def async_finish_request(server, request, client_address, logger):
+            server.RequestHandlerClass(request, client_address, server, logger)
+        self.executor.submit(async_finish_request(self, request, client_address, self.logger))
     
     def setup_logger(self):
         logger = None
@@ -162,12 +162,14 @@ class HTTPResponse:
         self.headers["Location"] = to_url
 
 class DispatcherHTTPHandler(SimpleHTTPRequestHandler):
+    def __init__(self, request, client_address, server, logger):
+        self.logger = logger
+        SimpleHTTPRequestHandler.__init__(self, request, client_address, server)
+    
     def handle_one_request(self):
         """
         Overrides the method in the base HTTP handler
         """
-        # TODO: This is the logic to be implemented 
-        # for async calls
         
         try:
             self.raw_requestline = self.rfile.readline(65537)
@@ -205,6 +207,7 @@ class DispatcherHTTPHandler(SimpleHTTPRequestHandler):
                         request = self.construct_request()
                     response = self.construct_response()
                     hnd.base_path = os.path.abspath(self.server.srv_path)  # TODO
+                    hnd.logger = self.logger # FIXME: pass to constructor
                     hnd.process(request, response)
                     self.process_response(request, response)
                     return
@@ -234,7 +237,7 @@ class DispatcherHTTPHandler(SimpleHTTPRequestHandler):
             else:
                 body = ""
         req.params = self._parse_request_params(req.method, body, "")
-        print(req.params)
+        self.logger.debug('Request params: %s'%req.params)
         return req
     
     def _parse_request_params(self, method, body, query_string):
@@ -298,6 +301,8 @@ class DispatcherHTTPHandler(SimpleHTTPRequestHandler):
         method = getattr(self, mname)
         method()
 
+    def log_message(self, format, *args):
+        self.logger.info('%s'%(format%args) )
     
     
 class SimpleHandler (BaseMappedHandler):
@@ -355,7 +360,7 @@ class SimpleHandler (BaseMappedHandler):
                     listingBuffer.append(self._format_file(params))
                     
             except IOError as e:
-                print(e) 
+                self.logger.error(e)
         
         g_params = {}
         g_params["server_version"] = "0.1.0"
@@ -391,7 +396,7 @@ class SimpleHandler (BaseMappedHandler):
             
             fh.close()
         except IOError as ioe:
-            print(ioe)
+            self.logger.error(ioe)
             response.send_error(500, str(ioe))
     
     def _get_mime_type(self, path):
